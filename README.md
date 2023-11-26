@@ -1,3 +1,7 @@
+<img width="460" alt="image" src="https://github.com/EranEid24/Ads-exercise-Ram-Kedem-/assets/149265837/2b76e5c6-ff10-4b97-930c-4b557f8ef10e">
+
+
+
 ###  1) List the first 10 ads, sort the results by their names in an ascending order
 
 ```
