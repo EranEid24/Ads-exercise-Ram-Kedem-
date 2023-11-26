@@ -1,0 +1,94 @@
+-- 1) List the first 10 ads, sort the results by their names in an ascending order
+
+SELECT TOP 10 * 
+FROM ads
+ORDER BY ad_name 
+
+-- 2) Display all clicks made in Sweden using Chrome browser
+
+SELECT *
+FROM clicks
+WHERE country = 'Sweden' 
+AND 
+		browser = 'Chrome'
+
+-- 3) List all conversions made in 2017
+
+SELECT * 
+FROM conversions
+WHERE YEAR(conversion_date) = 2017
+
+
+-- 4) Using Clicks table, what is the most frequently used browser ?
+
+
+SELECT TOP 1 browser
+FROM clicks
+GROUP BY browser
+ORDER BY COUNT(browser) DESC
+
+-- 5) Which ad has the highest amount of clicks ? display the distribution of clicks for each country
+
+
+SELECT a.ad_name, c.country, COUNT(c.ad_id) as num_of_clicks
+FROM ads a JOIN clicks c
+ON a.ad_id = c.ad_id
+WHERE a.ad_id = (
+					SELECT TOP 1 ad_id FROM clicks 
+					GROUP BY ad_id
+					ORDER BY COUNT(ad_id) DESC )
+GROUP BY a.ad_name, c.country
+
+/* 6) Conversion rate is calculated using the following formula : SUM(total_conversions) \ SUM(total_clicks) * 100.
+      Find out the conversion rate for the ad with the highest amount of clicks */
+
+with A as (
+SELECT TOP 1 ad_id, COUNT(ad_id) as clicks_num 
+FROM clicks
+GROUP BY ad_id
+ORDER BY COUNT(ad_id) DESC )
+
+SELECT CAST(CAST(COUNT(cv.click_id) as float) / CAST(A.clicks_num as float) AS float) * 100 AS conversion_rate
+FROM conversions cv JOIN clicks c 
+ON cv.click_id = c.click_id
+JOIN A ON A.ad_id = c.ad_id
+GROUP BY c.ad_id, clicks_num
+
+-- 7) Display the top-5 ads, having the highest conversion rate
+
+SELECT TOP 5 a.ad_name, CAST((CAST(COUNT(c.ad_id) as float) / CAST(COUNT(cv.conversion_id) as float) * 100) as conversion_rate
+FROM ads a JOIN clicks c
+ON a.ad_id = c.ad_id
+JOIN conversions cv 
+ON cv.click_id = c.click_id
+GROUP BY a.ad_id, a.ad_name, cv.conversion_id
+ORDER BY conversion_rate DESC
+
+-- 8) Is there any conversion rate differance between the browsers?
+
+
+SELECT c.browser,
+CAST((CAST(COUNT(cv.conversion_id) as float) / CAST(COUNT(c.click_id) as float) * 100) as varchar) + '%' as conversion_rate
+FROM ads a JOIN clicks c
+ON a.ad_id = c.ad_id
+LEFT OUTER JOIN conversions cv 
+ON cv.click_id = c.click_id
+GROUP BY c.browser
+ORDER BY conversion_rate DESC
+
+-- 9) In average, for each ad, how many days it took for a click to become a conversion? (to convert)
+
+SELECT a.ad_name, AVG(DATEDIFF(DAY, c.click_date, cv.conversion_date)) AS avg_time_to_convert
+FROM ads a JOIN clicks c 
+ON a.ad_id = c.ad_id
+RIGHT JOIN conversions cv
+ON c.click_id = cv.click_id
+GROUP BY a.ad_name
+
+-- 10) What is the most frequently used browser in Brazil
+
+SELECT TOP 1 browser 
+FROM clicks
+WHERE country = 'Brazil'
+GROUP BY browser
+ORDER BY COUNT(browser) DESC
